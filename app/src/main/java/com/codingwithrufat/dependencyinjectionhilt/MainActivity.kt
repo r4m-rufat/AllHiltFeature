@@ -1,11 +1,14 @@
 package com.codingwithrufat.dependencyinjectionhilt
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import androidx.fragment.app.Fragment
+import androidx.appcompat.app.AppCompatActivity
+import dagger.Binds
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.components.ActivityComponent
 import dagger.hilt.android.scopes.ActivityScoped
-import dagger.hilt.android.scopes.FragmentScoped
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -20,41 +23,52 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        println(someClass.doSomething())
-        println(someClass.doOtherThing())
+        println(someClass.getThing())
 
     }
 }
 
-@AndroidEntryPoint
-class MyFragment: Fragment(){
-
-    @Inject
-    lateinit var someClass: SomeClass
-
-}
-
-
-@Singleton
 class SomeClass
 @Inject
-constructor(private val otherSomeClass: OtherSomeClass){
-    fun doSomething(): String {
-        return "I do a thing"
-    }
-
-    fun doOtherThing(): String {
-        return otherSomeClass.doSomething()
+constructor(
+    private val someDependency: String
+) : SomeInterface {
+    override fun getThing(): String {
+        return "I got interface"
     }
 
 }
 
-class OtherSomeClass
-@Inject
-constructor(){
+interface SomeInterface {
+    fun getThing(): String
+}
 
-    fun doSomething(): String{
-        return "I do another thing"
+@InstallIn(ActivityComponent::class)
+@Module
+abstract class MyModule1 {
+    @ActivityScoped
+    @Binds
+    abstract fun bindSomeDependency(
+        someInterface: SomeClass
+    ): SomeInterface
+}
+
+@InstallIn(ActivityComponent::class)
+@Module
+class MyModule2 {
+
+    @ActivityScoped
+    @Provides
+    fun provideSomeString(): String {
+        return "some string"
+    }
+
+    @Singleton
+    @Provides
+    fun provideSomeInterface(
+        someString: String
+    ): SomeInterface{
+        return SomeClass(someString)
     }
 
 }
